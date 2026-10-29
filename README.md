@@ -44,9 +44,12 @@ Before implementation, settle the app-to-runner protocol and local storage forma
 
 ## Inspiration
 
-- [mac-dash](https://github.com/talhaorak/mac-dash) for visibility into macOS jobs and services.
+- [AIU](https://github.com/getparable/aiu) for native Mac styling, compact menu bar presentation, system typography, and restrained material surfaces.
+- [mac-dash](https://github.com/talhaorak/mac-dash) for future visibility into existing macOS jobs and services.
 
-Tend starts as an independent implementation. This repository currently contains no code copied from either project.
+The [UI direction](docs/ui-direction.md) translates these references into Tend's first screens and interaction rules.
+
+Tend starts as an independent implementation. This repository currently contains no code copied from these projects.
 
 ## Contributing
 
