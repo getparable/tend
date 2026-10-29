@@ -1,0 +1,4 @@
+schema: 1
+tracker:
+  kind: hub_native
+  repository: getparable/tend
