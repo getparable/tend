@@ -2,3 +2,14 @@ schema: 1
 tracker:
   kind: hub_native
   repository: getparable/tend
+codex:
+  # Must match the codex backend identity of every other project on the
+  # shared runners (Parable, ChurchKit). A mismatch drops the codex backend
+  # for all projects on the host and fails every claim with "local provider
+  # account or model capability changed after dispatch".
+  command: /usr/bin/env GOFLAGS=-p=6 GOMAXPROCS=6 codex --config shell_environment_policy.inherit=all app-server
+  read_timeout_ms: 60000
+  approval_policy: never
+  thread_sandbox: danger-full-access
+  turn_sandbox_policy:
+    type: dangerFullAccess
