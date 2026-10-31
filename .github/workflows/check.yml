@@ -1,0 +1,19 @@
+name: Check
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  macos:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.5'
+      - name: Select matching SDK and Swift toolchain
+        run: |
+          # This bootstrap gate intentionally fails if the runner image lacks
+          # Swift 6.4 / SDK 27.0; never claim older tools were verified.
+          swift --version
+          xcrun --show-sdk-version
+      - run: make check

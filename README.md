@@ -2,9 +2,40 @@
 
 Scripts and agents, on your schedule.
 
-Tend is a planned open-source Mac app for adding, scheduling, and managing scripts and AI tasks. The intended stack is a native SwiftUI interface, a Go task runner, and macOS launchd for scheduled execution.
+Tend is an open-source Mac app in development for adding, scheduling, and managing scripts and AI tasks. The stack is a native SwiftUI interface, a Go task service, and macOS launchd supervising that service.
 
-**Status: project bootstrap. There is no runnable app or release yet.**
+**Status: installed lifecycle proof.** A development app and Go helper can run a
+harmless in-memory fixture. Saved tasks, schedules and releases are not yet
+implemented.
+
+## Development lifecycle proof
+
+Initial scope is macOS 26+ on Apple Silicon. The build gate pins Go 1.26.5,
+Apple Swift 6.4 and macOS SDK 27.0, targeting macOS 26.0.
+Installed and GUI verification passed on macOS 27.0.1. macOS 26 runtime
+verification is explicitly deferred for this first development slice.
+
+```sh
+make check
+make app
+make install-dev
+make verify-launchd
+make verify-lifecycle
+```
+
+The development bundle installs only at `~/Applications/Tend Lifecycle.app`,
+with a separate development bundle ID and runtime directory. Open it to inspect
+service state, explicitly register/unregister its helper, and run/stop harmless
+fixtures. Quitting the UI leaves the service running. Results disappear when
+the helper restarts. A disabled helper is never silently re-enabled.
+The default build uses ad-hoc signing. For installed SMAppService verification,
+build with an explicitly supplied authorized development identity:
+`make app CODE_SIGN_IDENTITY='<operator-supplied-identity>'`. See the verification
+recipe before installing or replacing a development bundle.
+
+See the [architecture decision](docs/adr/0001-installed-lifecycle.md) and
+[verification recipe](docs/verification/lifecycle.md) for protocol, approval,
+setup, cleanup and the distinction between automated and attended checks.
 
 ## First milestone
 
@@ -29,11 +60,11 @@ The goal is to support different providers and local models. No model integratio
 
 - **SwiftUI app:** task list, editor, run details, and menu bar access.
 - **Go runner:** process execution, output capture, cancellation, and durable run records.
-- **launchd:** scheduled invocation of the runner, independent of the app window.
+- **launchd:** one user helper supervised independently of the app window; the Go service will own scheduling.
 
 A task is a saved instruction. A run is one execution of that instruction. Scripts and AI prompts share schedules, controls, and run history.
 
-Before implementation, settle the app-to-runner protocol and local storage format. The first version should require no hosted service or account. Tasks run with the current user's permissions. Credentials and task output stay out of source control.
+The lifecycle proof establishes a versioned JSON CLI/socket protocol. Durable local storage is the next slice. The first version requires no hosted service or account. Tasks run with the current user's permissions. Credentials and task output stay out of source control.
 
 ## Later
 
@@ -49,7 +80,7 @@ Before implementation, settle the app-to-runner protocol and local storage forma
 
 The [original Tend mock-up](docs/design/tend-main-window.svg) and [UI direction](docs/ui-direction.md) define the first screens and interaction rules.
 
-Tend starts as an independent implementation. This repository currently contains no code copied from these projects.
+Tend is an independent implementation. This repository contains no code copied from these projects.
 
 ## Contributing
 
