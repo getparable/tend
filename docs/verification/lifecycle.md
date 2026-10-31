@@ -93,21 +93,71 @@ this runner; their original evidence and artifact identities remain authoritativ
 No installed bundle, registration, personal task or unrelated job was changed.
 Full current command output is published as native evidence with this handoff.
 
+### UI control review repair, October 31, 2026
+
+Independent review of head `fb25151351f8a33784d640c20736be16a0771abb`
+(tree `416bad1ab3d9237f90d37c64e722cbe0a9185482`) found that duplicate
+start controls stayed enabled during running/stopping and an `already_running`
+response incorrectly changed the service label to Unavailable. Both start
+buttons and the start-request guard now use the same active-run policy.
+Application-level errors preserve the last run and an Available connection;
+transport, unsafe-peer, invalid-response and incompatible-version failures
+still block execution. Stop and Refresh retain their connection/busy checks.
+
+The response/control state lives in `TendCore/LifecycleState.swift` so Swift
+regression tests exercise running, stopping, rejected starts, cancellation,
+terminal results and transport failures without registering a helper or running
+user work. `make check` passed, including all five Swift tests and the app build
+with strict signature verification. The Go socket `TestLifecycle` still skips
+for the supplied long TMPDIR. Complete current output and the staged tree are
+published as native evidence. Installed/attended checks were not repeated for
+this repair; the earlier GUI evidence above belongs to its recorded source and
+artifact identities and does not claim a fresh GUI pass for the repaired app.
+
 ## Build and automated gates
 
 Required development tools: Go 1.26.5, Apple Swift 6.4, macOS SDK 27.0 and
 `swift-format`, `codesign`, `plutil`, `launchctl` from the selected Apple tools.
-The deployment target is macOS 26.0. `make check` refuses mismatched tools.
+The deployment target is macOS 26.0. Every Make target selects Go 1.26.5, overriding
+an inherited `GOTOOLCHAIN` environment value. A first run may download it; offline
+runs require the pinned toolchain already installed. `make check` prints selected
+versions and refuses mismatched tools, including an unsupported command-line
+Make override. Apple tool selection remains per command through `DEVELOPER_DIR`
+and `SDKROOT`; no global developer settings are changed.
 
 ```sh
-# Select the pinned Go version even when a newer Go is installed.
-export GOTOOLCHAIN=go1.26.5
 make check
 make app
 make install-dev
 make verify-launchd
 make verify-lifecycle
 ```
+
+### Finalization gate repair, October 31, 2026
+
+Recovery verified retained head `56a38c0c6b1e2e64267b2639e075a91bd6e43e07`
+and tree `693679bb7c468a91dab49a739c8ee0f4601d7153`. Receipt
+`timing_45488df73cb5147fce98d2a5b78d734f` records `make check` exiting 2 in
+about 50 ms with Go 1.26.6, emitting only `make: *** [check] Error 1`.
+On the unchanged source, a noninteractive `make check` passed with this host's
+Go 1.26.5, Apple Swift 6.4 and SDK 27.0. Selecting Go 1.26.6 reproduced the
+immediate exit 2 and identical diagnostic before any Swift or test command.
+The old exact-version test rejected Go 1.26.6; `go.mod` did not force a downgrade.
+This demonstrates a build-environment selection defect. It does not establish
+that the historical host had no further prerequisite problems.
+
+The Makefile now selects Go 1.26.5 for every target and reports tool versions
+with actionable mismatch messages. All existing formatting, vet, race, Swift
+test and bundle/signature gates are preserved. The regression check uses a real
+Go 1.26.6 host executable and inherited `GOTOOLCHAIN=go1.26.6`; the repaired
+`make check` selects Go 1.26.5 and passes, including its recursive app build.
+An explicit unsupported Make command-line override is still rejected.
+Complete reproduction and passing output, environment selections and the exact
+resulting staged tree are published as native diagnostic evidence for this
+handoff. No installed bundle or registration was changed. The prior installed
+and GUI evidence above is retained; those checks were not repeated for this
+build-only repair. The supplied long TMPDIR still causes the explicit socket
+`TestLifecycle` skip; the prior no-skip and installed IPC proofs remain separate.
 
 `make app` produces `dist/Tend Lifecycle.app`; `install-dev` refuses replacement
 at `~/Applications/Tend Lifecycle.app`. Unregister and remove only this isolated

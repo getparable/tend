@@ -14,6 +14,12 @@ Initial scope is macOS 26+ on Apple Silicon. The build gate pins Go 1.26.5,
 Apple Swift 6.4 and macOS SDK 27.0, targeting macOS 26.0.
 Installed and GUI verification passed on macOS 27.0.1. macOS 26 runtime
 verification is explicitly deferred for this first development slice.
+All Make targets select Go 1.26.5 through `GOTOOLCHAIN`, including when the host
+has a newer Go or exports another toolchain selection. Go may download the pinned
+toolchain on first use; offline builds require it to be installed already.
+`make check` prints selected versions and rejects mismatched Apple tools. Use
+`DEVELOPER_DIR` and `SDKROOT` to select an installed Swift 6.4 / SDK 27.0 pair
+without changing the global developer-tools selection.
 
 ```sh
 make check

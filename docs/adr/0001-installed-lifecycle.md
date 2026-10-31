@@ -11,6 +11,12 @@ runtime pass is claimed. Intel and public distribution are outside this proof.
 Command Line Tools suffice; full Xcode is not needed for this build. SwiftPM's
 6.4 default build system needs its bundled Testing macro loaded explicitly on
 this CLT installation; `tools/swifttest` discovers it in the selected toolchain.
+Every Make target exports `GOTOOLCHAIN=go1.26.5`: the `go.mod` toolchain directive
+alone does not downgrade a newer host Go. This keeps worker, recursive app build
+and noninteractive finalization checks on the same version. The exact Go,
+Apple Swift and SDK checks remain mandatory and print their selections. Apple
+tools still come from the caller's selected developer directory/SDK; mismatches
+fail with instructions to select the supported installed tools per command.
 
 ## Installed ownership
 

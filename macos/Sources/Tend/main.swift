@@ -7,10 +7,11 @@ import TendCore
 @MainActor
 final class LifecycleModel: ObservableObject {
   @Published var registration = "Disabled"
-  @Published var connection = "Unavailable"
-  @Published var run: Run?
-  @Published var message = "Register the development helper to begin."
+  @Published var state = LifecycleState()
   @Published var busy = false
+  var connection: String { state.connection }
+  var run: Run? { state.run }
+  var message: String { state.message }
   let helper = SMAppService.agent(plistName: "io.parable.tend.lifecycle.agent.plist")
   let cli = Bundle.main.bundleURL.appending(path: "Contents/Helpers/tend")
 
@@ -27,35 +28,29 @@ final class LifecycleModel: ObservableObject {
   func register() {
     // Never register automatically, including when macOS reports a disabled item.
     guard helper.status == .notRegistered || helper.status == .notFound else {
-      message = "Review the existing helper in Login Items & Extensions."
+      state.message = "Review the existing helper in Login Items & Extensions."
       return
     }
-    do { try helper.register() } catch { message = error.localizedDescription }
+    do { try helper.register() } catch { state.message = error.localizedDescription }
     refreshRegistration()
   }
 
   func unregister() async {
-    do { try await helper.unregister() } catch { message = error.localizedDescription }
+    do { try await helper.unregister() } catch { state.message = error.localizedDescription }
     refreshRegistration()
     await request("service.status")
   }
 
   func request(_ method: String, fixture: String? = nil) async {
     guard !busy else { return }
+    guard method != "fixture.start" || state.canStartFixture else { return }
     busy = true
     defer { busy = false }
     refreshRegistration()
     do {
       let response = try await Bridge.call(Request(method: method, fixture: fixture), cli: cli)
-      if let error = response.error {
-        connection = error.code == "incompatible_version" ? "Incompatible" : "Unavailable"
-        message = error.message
-        return
-      }
-      connection = "Available"
-      run = response.result?.run
-      message =
-        "Connected to helper PID \(response.result?.pid ?? 0). Results live in helper memory."
+      state.receive(response)
+      if response.error != nil { return }
       // Opt-in installed-app verification observes the same state the view uses.
       // Normal launches never export run data. The harness supplies a private
       // scratch path and removes it after collecting its diagnostic evidence.
@@ -71,8 +66,8 @@ final class LifecycleModel: ObservableObject {
         }
       }
     } catch {
-      connection = (error as? BridgeError) == .incompatible ? "Incompatible" : "Unavailable"
-      message = error.localizedDescription
+      state.connection = (error as? BridgeError) == .incompatible ? "Incompatible" : "Unavailable"
+      state.message = error.localizedDescription
     }
   }
 }
@@ -96,9 +91,11 @@ struct LifecycleView: View {
       Text("Run the three-second fixture, quit Tend, then reopen to inspect its result.")
       HStack {
         Button("Run Fixture") { Task { await model.request("fixture.start", fixture: "complete") } }
+          .disabled(!model.state.canStartFixture)
         Button("Run Cancellation Fixture") {
           Task { await model.request("fixture.start", fixture: "cancel") }
         }
+        .disabled(!model.state.canStartFixture)
         Button("Stop") { Task { await model.request("fixture.cancel") } }
         Button("Refresh") { Task { await model.request("service.status") } }
       }.disabled(model.busy || model.connection != "Available")
