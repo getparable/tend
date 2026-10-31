@@ -122,8 +122,10 @@ The deployment target is macOS 26.0. Every Make target selects Go 1.26.5, overri
 an inherited `GOTOOLCHAIN` environment value. A first run may download it; offline
 runs require the pinned toolchain already installed. `make check` prints selected
 versions and refuses mismatched tools, including an unsupported command-line
-Make override. Apple tool selection remains per command through `DEVELOPER_DIR`
-and `SDKROOT`; no global developer settings are changed.
+Make override. Apple tools default to `/Library/Developer/CommandLineTools`
+and `/Library/Developer/CommandLineTools/SDKs/MacOSX27.0.sdk`. Override both
+`DEVELOPER_DIR` and `SDKROOT` per command for another supported installation;
+no global developer settings are changed.
 
 ```sh
 make check
@@ -158,6 +160,36 @@ handoff. No installed bundle or registration was changed. The prior installed
 and GUI evidence above is retained; those checks were not repeated for this
 build-only repair. The supplied long TMPDIR still causes the explicit socket
 `TestLifecycle` skip; the prior no-skip and installed IPC proofs remain separate.
+
+### Apple tool selection repair, October 31, 2026
+
+Recovery preserved head `ef5f9da379c50c5de8964f1d3250c7fb6fecaf16`, tree
+`f22f341333952d772d72975f8a8ae73b87deb2c3`, including the reviewed UI controls
+and Go toolchain repair. On this host, plain `make check` exited 2 before tests:
+Swift resolved to Xcode's 6.4.2, and `xcrun` reported that
+`/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk` could not be located.
+The versioned CLT SDK and Swift 6.4 were installed and usable with explicit
+selection. The latest retained attempt also records exit 2, but omits its
+failing command output; this reproduction does not prove that attempt's cause.
+
+Make now exports the supported CLT directory and versioned SDK path as defaults
+for all targets, including recursive builds. Environment and Make overrides
+remain authoritative and are still checked against the pinned requirements.
+CI invokes the same `make check` without an earlier SDK probe using different
+selection. No global `xcode-select`, SDK link, installed app or registration
+was changed.
+
+With these changes, plain `make check` passed formatting, vet, Go race tests,
+all five Swift tests and the recursive app build with strict deep signature
+verification. `SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
+make check` exited 2 with the required-SDK diagnostic, confirming overrides are
+honored and mismatches rejected. The socket test explicitly skipped for the
+supplied long TMPDIR; existing linker search-path warnings were nonfatal.
+Complete before/after and override command output is published as native
+diagnostic evidence. Build output and logs used supplied TMPDIR. The original
+installed/GUI evidence and macOS 26 deferral retain their recorded identities;
+this tooling repair does not claim new installed, GUI, remote CI or landing
+acceptance. The staged source still requires host publication and review.
 
 `make app` produces `dist/Tend Lifecycle.app`; `install-dev` refuses replacement
 at `~/Applications/Tend Lifecycle.app`. Unregister and remove only this isolated

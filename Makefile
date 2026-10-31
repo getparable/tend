@@ -3,6 +3,11 @@
 # supported toolchain for every target to satisfy the exact-version gate,
 # including recursive make, without depending on the caller's environment.
 export GOTOOLCHAIN := go1.26.5
+# Use the supported CLT/SDK pair even when global xcode-select points elsewhere.
+# Explicit environment or make arguments still select another installed pair;
+# check below validates it. Never change the machine's developer-tools setting.
+export DEVELOPER_DIR ?= /Library/Developer/CommandLineTools
+export SDKROOT ?= /Library/Developer/CommandLineTools/SDKs/MacOSX27.0.sdk
 export MACOSX_DEPLOYMENT_TARGET := 26.0
 export CGO_ENABLED := 1
 export CGO_CFLAGS := -mmacosx-version-min=26.0

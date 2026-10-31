@@ -15,8 +15,11 @@ Every Make target exports `GOTOOLCHAIN=go1.26.5`: the `go.mod` toolchain directi
 alone does not downgrade a newer host Go. This keeps worker, recursive app build
 and noninteractive finalization checks on the same version. The exact Go,
 Apple Swift and SDK checks remain mandatory and print their selections. Apple
-tools still come from the caller's selected developer directory/SDK; mismatches
-fail with instructions to select the supported installed tools per command.
+tools default to `/Library/Developer/CommandLineTools` and its versioned
+`SDKs/MacOSX27.0.sdk`, avoiding global Xcode selection and unversioned SDK aliases.
+Explicit `DEVELOPER_DIR` and `SDKROOT` environment or Make arguments take
+precedence over these defaults. Mismatches still fail with instructions to
+select the supported installed tools per command; global settings are untouched.
 
 ## Installed ownership
 

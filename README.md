@@ -17,9 +17,11 @@ verification is explicitly deferred for this first development slice.
 All Make targets select Go 1.26.5 through `GOTOOLCHAIN`, including when the host
 has a newer Go or exports another toolchain selection. Go may download the pinned
 toolchain on first use; offline builds require it to be installed already.
-`make check` prints selected versions and rejects mismatched Apple tools. Use
-`DEVELOPER_DIR` and `SDKROOT` to select an installed Swift 6.4 / SDK 27.0 pair
-without changing the global developer-tools selection.
+Make defaults to `/Library/Developer/CommandLineTools` and its versioned
+`SDKs/MacOSX27.0.sdk`, independently of global `xcode-select` and SDK aliases.
+`make check` prints selected versions and rejects missing or mismatched Apple
+tools. Override `DEVELOPER_DIR` and `SDKROOT` together to select another installed
+Swift 6.4 / SDK 27.0 pair without changing global developer-tool settings.
 
 ```sh
 make check
